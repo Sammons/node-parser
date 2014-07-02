@@ -10,7 +10,8 @@ tokens = {
 }
 
 non_terminals = {
-	PERSON_WELCOMING: { seq: [ 'GREETING', 'ME' ] }
+	PERSON_WELCOMING: { seq: [ 'GREETING', 'ME' ] },
+	NAMING_MYSELF: { seq: ['ME', 'ME']}
 }
 
 var plaintext = fs.readFileSync(args[0])+'';
@@ -29,11 +30,12 @@ if (plaintext != '') {
 	return;
 }
 
-console.log(tokens_matched)
 
 reduce_stack_once(tokens_matched);
 reduce_stack_once(tokens_matched);
-
+reduce_stack_once(tokens_matched);
+reduce_stack_once(tokens_matched);
+reduce_stack_once(tokens_matched)
 console.log(tokens_matched)
 function reduce_stack_once(stack) {
 	var matches = [];
@@ -43,17 +45,19 @@ function reduce_stack_once(stack) {
 		var pos = 0;
 		var seq = non_terminals[i].seq;
 		var match = {tok: '', seq: []};
+		var found = false;
 		while (pos < stack.length) {
 			/* check the stack against this non-terminal */
 		    if (stack[pos].tok == seq[match_len]) {
 		    	match_len++;
 		    	if (match_len == seq.length) {
-		    		console.log(non_terminals[i], i);
 		    		var matching_sequence = stack.splice(pos, match_len-1);
 		    		stack[pos-1] = (function(){ return {tok:i, seq: matching_sequence} } )();
+		    		found = true;
 		    	}
 		    }
 		    pos++;
+		    if (found) return;
 		}
 	}
 }
