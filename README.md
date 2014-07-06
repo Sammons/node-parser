@@ -4,11 +4,15 @@ but it is a rudimentary grammar module which can be used when regex just isn't e
 If you are planning to build a new language, this probably won't get you all the way there, but
 it could help.
 
-### How to use it
-
 `npm install --save Sammons/SubjectLogger`
 
+### How to use it
+
+Note that this is a grammar module, and it is recommended to learn a bit about grammar before diving in - here's a wikipedia link: http://en.wikipedia.org/wiki/Context-free_grammar
+
 below is the code from the example, essentially define tokens using regex. Then define non terminals as combinations of tokens and non terminals -- note that you may use recursively defined non terminals as seen below, but can run into a loop if things are ambiguous.
+
+The parser emits an event for every token and non terminal, in Depth First order, and passes the sequence making up the match to any listeners.
 
 Every token in the input file must be defined or an error will result; Brevity was the focus when writing this, and the code base is fairly small and simple. Don't be afraid to jump into the parser.js file and change things!
 
