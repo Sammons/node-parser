@@ -23,35 +23,41 @@ module.exports.analyze = function ( file, tokens, non_terminals, callback ) {
 	}
 
 	while (reduce_stack_once(tokens_matched));
-
 	depth_first_traverse( tokens_matched[0] );
+	if (callback) callback(tokens_matched[0]);
 
 	function reduce_stack_once(stack) {
 		var matches = [];
 		/* for every non-terminal, check the stack */
-		for (var i in non_terminals) {
-			var match_len = 0; /* aka, offset */
-			var pos = 0;
-			var seq = non_terminals[i].seq;
-			var match = {tok: '', seq: []};
-			var found = false;
-			while (pos < stack.length) {
-				/* check the stack against this non-terminal */
-			    if (stack[pos].tok == seq[match_len]) {
-			    	match_len++;
-			    	if (match_len == seq.length) {
-			    		var matching_sequence = stack.splice(pos-1, match_len);
-			    		stack.splice(pos-1, 0, (function(){ return {tok:i, seq: matching_sequence} } )());
-			    		found = true;
-			    	}
-			    }
-			    pos++;
-			    if (found) return true;
+		for (var j in non_terminals) {
+			var sequences = non_terminals[j];
+			var nterm = j;
+			for (var k in sequences) {
+				var potential_seq = sequences[k];
+				for (var i in potential_seq) {
+					var match_len = 0; /* aka, offset */
+					var pos = 0;
+					var seq = sequences[k];
+					var match = {tok: '', seq: []};
+					var found = false;
+					while (pos < stack.length) {
+						/* check the stack against this non-terminal */
+					    if (stack[pos].tok == seq[match_len]) {
+					    	match_len++;
+					    	if (match_len == seq.length) {
+					    		var matching_sequence = stack.splice(pos-match_len+1, match_len);
+					    		stack.splice(pos-match_len+1, 0, (function(){ return {tok:nterm, seq: matching_sequence} } )());
+					    		found = true;
+					    	}
+					    }
+					    pos++;
+					    if (found) return true;
+					}
+				}
 			}
 		}
 		return false;
 	}
-
 
 	function next_token(text) {
 		var matches = [];
@@ -77,6 +83,4 @@ module.exports.analyze = function ( file, tokens, non_terminals, callback ) {
 		}
 	}
 
-	return tokens_matched[0];
 }
-

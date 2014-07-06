@@ -1,14 +1,30 @@
-var stream_parser = require('./stream.js');
+var parser = require('./parser.js');
 tokens = {
-	ME: /^ben|^sammons|^/i,
-	IS: /^is/i,
-	POSITIVE: /^neat/i,
-	IGNORE: /^\s/ //necessary
+	NUMBER: /^[0-9\.]+/,
+	OP:     /^[\+\-\/\*]/,
+	EQUAL:  /^\=\=/,
+	ASSIGN: /^\=/,
+	LPAREN: /^\(/,
+	RPAREN: /^\)/,
+	LCURL:  /^\{/,
+	RCURL:  /^\}/,
+	IGNORE: /^\s/ //necessary to delimit tokens, not tested with other than whitespace
 }
 
 non_terminals = {
-	DESCRIPTOR: { seq: [ 'ME', 'IS' ] },
-	COMPLIMENT: { seq: [ 'DESCRIPTOR', 'POSITIVE'] }
+	MATH_EXP : [ 
+	 [ 'NUMBER', 'OP','NUMBER'        ],
+	 [ 'LPAREN', 'MATH_EXP', 'RPAREN' ],
+	 [ 'MATH_EXP', 'OP', 'MATH_EXP'   ],
+	 [ 'MATH_EXP', 'OP', 'NUMBER'     ],
+	 [ 'NUMBER', 'OP', 'MATH_EXP'     ] 
+	 ]
 }
 
-stream_parser.analyze( 'input.txt', tokens, non_terminals, function( ast ) {} )
+parser.on( 'MATH_EXP', function( op ) {
+	console.log( 'MATH_EXP', op )
+})
+
+parser.analyze( 'input.txt', tokens, non_terminals, function( tree ) {
+	console.log('root node:',JSON.stringify(tree).replace('{','\n{'))
+} )
