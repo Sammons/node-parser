@@ -11,11 +11,4 @@ non_terminals = {
 	COMPLIMENT: { seq: [ 'DESCRIPTOR', 'POSITIVE'] }
 }
 
-stream_parser.on('DESCRIPTOR',function( children ){
-	console.log('desc',children)
-})
-stream_parser.on('COMPLIMENT',function( children ) {
-	console.log('comp',children)
-})
-
 stream_parser.analyze( 'input.txt', tokens, non_terminals, function( ast ) {} )
