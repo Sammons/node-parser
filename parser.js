@@ -6,11 +6,14 @@ module.exports = new EventEmitter();
 module.exports.analyze = function ( file, tokens, non_terminals, callback ) {
 	if (!file) return console.log("not enough args");
 
+	// read in all of the plaintext
 	var plaintext = fs.readFileSync(file)+'';
-	var backup_plaintext = plaintext;
+
+	// the stack
 	var tokens_matched = []
 
-	do {
+	do { // attempt to identify all of the tokens in the plaintext
+		 // stops once it fails to find more, so bad tokens kill it
 		var next = next_token(plaintext);
 		if (next.seq[0] != '') tokens_matched.push(next)
 		plaintext = plaintext.replace(next.seq[0],'');
@@ -22,31 +25,62 @@ module.exports.analyze = function ( file, tokens, non_terminals, callback ) {
 		return;
 	}
 
+	// reduce the stack by the grammar defined by the
+	// non-terminals, naturally forms a tree since
+	// reduction operations push all children into 
+	// a new single node
 	while (reduce_stack_once(tokens_matched));
-	depth_first_traverse( tokens_matched[0] );
+	
+	// perform depth first traversal on the tree,
+	// emitting the non terminal name and
+	// passing the sequence of tokens/matches
+	// which are its children
+	for (var root_node in tokens_matched)
+		depth_first_traverse( tokens_matched[ root_node ] );
+	
 	if (callback) callback(tokens_matched[0]);
 
 	function reduce_stack_once(stack) {
 		var matches = [];
 		/* for every non-terminal, check the stack */
 		for (var j in non_terminals) {
-			var sequences = non_terminals[j];
-			var nterm = j;
+			// each non_terminal has an array of sequences
+			// each of these sequences being tokens which
+			// create a match for this non-terminal
+			var sequences = non_terminals[j]
+			  , nterm = j;
+
+			// check through each sequence which might match this
+			// non-terminal
 			for (var k in sequences) {
 				var potential_seq = sequences[k];
+
+				// for every token making up this candidate sequence
+				// check if it matches (the whole sequence must match)
+				// for a non-terminal to reduce these elements 
 				for (var i in potential_seq) {
-					var match_len = 0; /* aka, offset */
-					var pos = 0;
-					var seq = sequences[k];
-					var match = {tok: '', seq: []};
-					var found = false;
+					var match_len = 0              // aka, offset from beginning of match 
+					  , pos = 0                    // current position to check for next in sequence
+					  , match = {tok: '', seq: []} // the actual match object, contains literals and/or tokens
+					  , found = false;             // has the whole non-terminal been matched
+
+					// iterate over every character checking for matches, once we find one
+					// we jump to the end of it and continue until either there is no match
+					// or we find one
 					while (pos < stack.length) {
-						/* check the stack against this non-terminal */
-					    if (stack[pos].tok == seq[match_len]) {
+						// check the stack to see if the non-terminal is a match
+					    if (stack[pos].tok == potential_seq[match_len]) {
 					    	match_len++;
-					    	if (match_len == seq.length) {
+					    	if (match_len == potential_seq.length) { // success
+					    		
+					    		// remove the matching sequence
 					    		var matching_sequence = stack.splice(pos-match_len+1, match_len);
-					    		stack.splice(pos-match_len+1, 0, (function(){ return {tok:nterm, seq: matching_sequence} } )());
+
+					    		stack.splice( // insert the new non-terminal containing the sequence
+					    			  pos-match_len+1
+					    			, 0
+					    			, (function(){ return {tok:nterm, seq: matching_sequence} } )()
+					    			); 
 					    		found = true;
 					    	}
 					    }
@@ -59,14 +93,27 @@ module.exports.analyze = function ( file, tokens, non_terminals, callback ) {
 		return false;
 	}
 
+	// attempts to find a matching token in text
+	// returns a match object which contains the literal which matched it
 	function next_token(text) {
 		var matches = [];
+		// check each token
 		for (var i in tokens) {
+			// see if this token's regex matches
 			var tok_matches = text.match(tokens[i]);
-			for (var j in tok_matches) (function(){tok_matches[j] = {tok: i, seq: [ tok_matches[j] ]}})()
+			if (tok_matches)
+				tok_matches[0] = {tok: i, seq: [ tok_matches[0] ]}
+			else
+				tok_matches = []
+			// add this match object to the bucket if it succeeded
 			matches = matches.concat(tok_matches);
 		}
+		// the longest match is what we take
+		// so this is that variable
 		var longest = {seq: ['']};
+
+		// take each match and find the longest,
+		// that is our next token
 		for (var i in matches) {
 			if (matches[i] != null 
 				&& matches[i].seq[0] != null 
@@ -76,6 +123,7 @@ module.exports.analyze = function ( file, tokens, non_terminals, callback ) {
 		return longest;
 	}
 
+	// traverse the end tree and emit events
 	function depth_first_traverse( node ) {
 		if (node.tok) {
 			for (var i in node.seq) depth_first_traverse( node.seq[i] );
