@@ -117,7 +117,8 @@ module.exports.analyze = function ( input, tokens, non_terminals, callback ) {
 		// take each match and find the longest,
 		// that is our next token
 		for (var i in matches) {
-			if (matches[i] != null 
+			if (matches[i] != null
+				&& matches[i].seq
 				&& matches[i].seq[0] != null 
 				&& matches[i].seq[0].length > longest.seq[0].length
 			) longest = matches[i];

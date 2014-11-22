@@ -1,4 +1,4 @@
-var parser = require('./parser.js');
+var parser = require('./index.js');
 var fs = require('fs');
 
 tokens = {
