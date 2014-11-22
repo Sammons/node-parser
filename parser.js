@@ -3,11 +3,10 @@ var EventEmitter = require('events').EventEmitter
 
 module.exports = new EventEmitter();
 
-module.exports.analyze = function ( file, tokens, non_terminals, callback ) {
-	if (!file) return console.log("not enough args");
+module.exports.analyze = function ( input, tokens, non_terminals, callback ) {
 
 	// read in all of the plaintext
-	var plaintext = fs.readFileSync(file)+'';
+	var plaintext = input;
 
 	// the stack
 	var tokens_matched = []
@@ -36,7 +35,7 @@ module.exports.analyze = function ( file, tokens, non_terminals, callback ) {
 	// passing the sequence of tokens/matches
 	// which are its children
 	for (var root_node in tokens_matched)
-		depth_first_traverse( tokens_matched[ root_node ] );
+		traverse( tokens_matched[ root_node ] );
 	
 	if (callback) callback(tokens_matched[0]);
 
@@ -75,7 +74,7 @@ module.exports.analyze = function ( file, tokens, non_terminals, callback ) {
 					    		
 					    		// remove the matching sequence
 					    		var matching_sequence = stack.splice(pos-match_len+1, match_len);
-
+					    		console.log(matching_sequence)
 					    		stack.splice( // insert the new non-terminal containing the sequence
 					    			  pos-match_len+1
 					    			, 0
@@ -83,6 +82,9 @@ module.exports.analyze = function ( file, tokens, non_terminals, callback ) {
 					    			); 
 					    		found = true;
 					    	}
+					    }
+					    else if (found == false) {
+					    	match_len = 0;
 					    }
 					    pos++;
 					    if (found) return true;
@@ -124,11 +126,21 @@ module.exports.analyze = function ( file, tokens, non_terminals, callback ) {
 	}
 
 	// traverse the end tree and emit events
-	function depth_first_traverse( node ) {
-		if (node.tok) {
-			for (var i in node.seq) depth_first_traverse( node.seq[i] );
-			module.exports.emit( node.tok, node.seq )
+	function traverse( node ) {
+		tmp = [];
+
+		if (node.tok)
+		for (var i in node.seq)
+		{
+			tmp.push( node.seq[i] );
 		}
+
+		if (node.tok)
+		for (var i in tmp) 
+			if (tmp[i]) traverse(tmp[i]);
+
+		if (node.tok)
+			module.exports.emit( node.tok, node.seq )
 	}
 
 }
