@@ -1,4 +1,6 @@
 var parser = require('./parser.js');
+var fs = require('fs');
+
 tokens = {
 	NUMBER: /^[0-9\.]+/,
 	OP:     /^[\+\-\/\*]/,
@@ -13,18 +15,16 @@ tokens = {
 
 non_terminals = {
 	MATH_EXP : [ 
-	 [ 'NUMBER', 'OP','NUMBER'        ],
 	 [ 'LPAREN', 'MATH_EXP', 'RPAREN' ],
 	 [ 'MATH_EXP', 'OP', 'MATH_EXP'   ],
-	 [ 'MATH_EXP', 'OP', 'NUMBER'     ],
-	 [ 'NUMBER', 'OP', 'MATH_EXP'     ] 
+	 [ 'NUMBER' ] 
 	 ]
 }
 
-parser.on( 'MATH_EXP', function( op ) {
-	console.log( 'MATH_EXP', op )
-})
 
-parser.analyze( 'input.txt', tokens, non_terminals, function( tree ) {
-	console.log('root node:',JSON.stringify(tree).replace('{','\n{'))
+parser.analyze( ''+fs.readFileSync('input.txt'), tokens, non_terminals, function( emitter, tree ) {
+	emitter.on( 'MATH_EXP', function( op ) {
+		console.log( 'MATH_EXP', op )
+	})
+	//console.log('root node:',JSON.stringify(tree).replace('{','\n{'))
 } )

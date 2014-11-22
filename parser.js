@@ -1,7 +1,7 @@
 var fs = require('fs');
 var EventEmitter = require('events').EventEmitter
 
-module.exports = new EventEmitter();
+var emitter = new EventEmitter();
 
 module.exports.analyze = function ( input, tokens, non_terminals, callback ) {
 
@@ -30,14 +30,14 @@ module.exports.analyze = function ( input, tokens, non_terminals, callback ) {
 	// a new single node
 	while (reduce_stack_once(tokens_matched));
 	
-	// perform depth first traversal on the tree,
+	if (callback) callback( emitter, tokens_matched[0]);
+
+	// traverse the tree,
 	// emitting the non terminal name and
 	// passing the sequence of tokens/matches
 	// which are its children
 	for (var root_node in tokens_matched)
 		traverse( tokens_matched[ root_node ] );
-	
-	if (callback) callback(tokens_matched[0]);
 
 	function reduce_stack_once(stack) {
 		var matches = [];
@@ -139,8 +139,9 @@ module.exports.analyze = function ( input, tokens, non_terminals, callback ) {
 		for (var i in tmp) 
 			if (tmp[i]) traverse(tmp[i]);
 
-		if (node.tok)
-			module.exports.emit( node.tok, node.seq )
+		if (node.tok){
+			emitter.emit( node.tok, node.seq )
+		}
 	}
 
 }
