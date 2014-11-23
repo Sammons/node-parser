@@ -1,10 +1,10 @@
 var fs = require('fs');
 var EventEmitter = require('events').EventEmitter
 
-var emitter = new EventEmitter();
 
 module.exports.analyze = function ( input, tokens, non_terminals, callback ) {
 
+  var emitter = new EventEmitter();
   // read in all of the plaintext
   var plaintext = input;
 
